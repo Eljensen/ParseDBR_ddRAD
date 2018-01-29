@@ -217,7 +217,25 @@ class Test(unittest.TestCase):
         print "exec time: " + str(t2-t1)
         exp = len(a.drop_list)
         self.assertEqual(num_removed, exp, "Number removed and number dropped don't match")
+    
+    def testRead2IndexChecking(self):
+        #fn = "/home/karl/Downloads/P_Bear_ddRAD1_R2_subset.fastq.gz"
+        fn = "/home/karl/Downloads/fish_bird_subset_R2.fastq.gz"
+        Read2.index = "ACTTGA"
+        #Read2.index = "ATCACG"
+        bad_index = 0
+        good_index = 0
+        for fq in ParseFastQ(fn):
+            try:
+                r2 = Read2(fq)
+                good_index += 1
+            except ValueError as e:
+                if "Index" in str(e): 
+                    bad_index+=1
         
+        self.assertGreater(bad_index,0,)
+        self.assertGreater(good_index,0,)
+
 if __name__ == "__main__":
     import sys;sys.argv = ['', 'Test.testOpenFile', 
                            'Test.testRead',
@@ -235,6 +253,7 @@ if __name__ == "__main__":
                            'Test.trialRun',
      #                      'Test.trialRunDuplicates',
                            'Test.testRemoveDuplicates',
+                           'Test.testRead2IndexChecking',
                            'Test.testStripDuplicates' # This test is last because it changes static vars
                            ]
     unittest.main()

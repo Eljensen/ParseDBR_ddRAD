@@ -67,7 +67,7 @@ class Read(object):
         else :
             retval = self.seq.find(seq,start,end)
 
-        if not retval:
+        if retval < 0:
             raise ValueError("Sequence Not Found")
         return retval
 
@@ -140,7 +140,10 @@ class Read2(Read):
             raise ValueError("Invalid Enzyme Recognition Sequence")
         
         # Check the index
-        self.find_seq(self.index,self.os_anchor,self.os_index)
+        try:
+            self.find_seq(self.index,self.os_anchor,self.os_index+len(self.index))
+        except ValueError:
+            raise ValueError("Index not found")
 
     def compare(self,read): 
         ''' Check for matching dbr and inserts '''
