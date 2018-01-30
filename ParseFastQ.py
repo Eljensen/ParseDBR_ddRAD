@@ -7,6 +7,7 @@ import gzip
 import re
 import time
 import argparse
+import sys
 
 class ParseFastQ(object):
     ''' Accepts filename and provides basic incremental read functionality '''
@@ -66,9 +67,9 @@ class Read(object):
                     raise ValueError("Sequence Not Found")
         else :
             retval = self.seq.find(seq,start,end)
+            if retval < 0:
+                raise ValueError("Sequence Not Found")
 
-        if retval < 0:
-            raise ValueError("Sequence Not Found")
         return retval
 
     def check_id(self,seq_id):
@@ -322,3 +323,5 @@ if __name__ == "__main__":
         FindDuplicates(args.read2, args.out2, args.drop)
         StripFile(args.drop, args.read1, args.out1, 1)
         
+    sys.stdout.flush()
+    sys.stderr.flush()
