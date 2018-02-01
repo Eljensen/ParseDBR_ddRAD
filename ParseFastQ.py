@@ -1,6 +1,5 @@
 '''
 Created on Jan 11, 2018
-
 @author: karl
 '''
 import gzip
@@ -96,7 +95,8 @@ class Read1(Read):
         super(Read1,self).__init__(FastQ)
 
         # check if ERS is present in the first 10 bp
-        idx = self.find_ers()
+        #idx = self.find_ers()
+        idx = 0
         self.insert=self.seq[idx+len(Read1.ers):]
         self.bc=self.seq[len(Read1.anchor):idx]
         #if self.seq[:len(Read1.anchor)] != Read1.anchor : 
@@ -283,10 +283,8 @@ def FindDuplicates(fin,fout,fdrop):
                 dbr_table[r.dbr,r.insert] = r.id
                 fout.write(r.trim_dbr_anchor())
             else :
-                print "found duplicate of " + dbr_table[r.dbr,r.insert]
-                print r.to_str()
                 dup += 1
-                fdup.write(dbr_table[r.dbr,r.insert]+ '\n')
+                fdup.write(fq['id'] + '\n')
         except ValueError:
             fdup.write(fq['id'] + '\n')
             bad += 1
