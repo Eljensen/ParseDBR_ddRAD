@@ -7,6 +7,7 @@ import re
 import time
 import argparse
 import sys
+from gzip import GzipFile
 
 class ParseFastQ(object):
     ''' Accepts filename and provides basic incremental read functionality '''
@@ -242,7 +243,7 @@ def VerifyRead1(fin,fout,fdrop):
     fd.close()
     fo.close()
 
-def StripFile(fdrop,fin,fout,fin_read_type=1):
+def StripFile(fdrop,fin,fout,fin_read_type=1,nozip=False):
     tbr = {}
     count = 0
     if fin_read_type == 1:
@@ -250,14 +251,24 @@ def StripFile(fdrop,fin,fout,fin_read_type=1):
     else:
         fout_read_type = 1;
         
-    with open(fdrop) as f:
-        for seq_id in f:
-            #pat = seq[:i] + dots + seq[i+max_err:]
-            pat = str(fout_read_type) + ":N:0:"
-            tmp = re.sub(pat,str(fin_read_type) + ":N:0:",seq_id.rstrip())
-            tbr[tmp] = 1
+    #TODO: Refactor this if statement
+    if(nozip):
+        with open(fdrop) as f:
+            for seq_id in f:
+                pat = str(fout_read_type) + ":N:0:"
+                tmp = re.sub(pat,str(fin_read_type) + ":N:0:",seq_id.rstrip())
+                tbr[tmp] = 1
+    else:
+        with gzip.open(fdrop) as f:
+            for seq_id in f:
+                pat = str(fout_read_type) + ":N:0:"
+                tmp = re.sub(pat,str(fin_read_type) + ":N:0:",seq_id.rstrip())
+                tbr[tmp] = 1
     
-    r1_out = open(fout,'w')
+    if(nozip):
+        r1_out = open(fout,'w')
+    else:
+        r1_out = GzipFile(fout,'w')
     
     for fq in ParseFastQ(fin):
         if fq['id'] not in tbr:
@@ -267,12 +278,16 @@ def StripFile(fdrop,fin,fout,fin_read_type=1):
     print "Removed: " + str(count)
     r1_out.close()
 
-def FindDuplicates(fin,fout,fdrop):
+def FindDuplicates(fin,fout,fdrop,nozip=False):
     count = 0
     bad = 0
     dup = 0
-    fout = open(fout,'w')
-    fdup = open(fdrop, 'w')
+    if(nozip):
+        fout = open(fout,'w')
+        fdup = open(fdrop, 'w')
+    else:
+        fout = GzipFile(fout,'w')
+        fdup = GzipFile(fdrop, 'w')
     t1 = time.time()
     dbr_table = {}
     for fq in ParseFastQ(fin):
@@ -305,21 +320,31 @@ if __name__ == "__main__":
         )
     parser.add_argument('--read1','-r', help='Read 1 fastq file', required=True,)
     parser.add_argument('--read2','-R', help='Read 2 fastq file', required=True)
+    parser.add_argument('--index','-i', help='Read 2 index sequence', required=True)
+    parser.add_argument('--enzyme','-e', help='Read 2 enzyme sequence', required=True)
     parser.add_argument('--out1','-n', help='Read 1 fastq output file', required=True)
     parser.add_argument('--out2','-N', help='Read 1 fastq output file', required=True)
-    parser.add_argument('--drop', help='Drop file name',default="drop_list.txt",required=False)
+    parser.add_argument('--drop', help='Drop file name',default="drop_list",required=False)
+    parser.add_argument('--nogzip','-Z', help='Do not zip output files',action='store_true')
     args = parser.parse_args()
     
+    if(args.nogzip == False and args.drop == "drop_list"):
+        args.drop = "drop_list.gz"
+        
     # If read1 sequences need to be checked use this:
     check_read1 = 0
+
+    Read2.index = args.index
+    Read2.ers = args.enzyme
+
     if(check_read1 == 1):
         VerifyRead1(args.read1, 'r1_tmp', 'r1_drop')
         StripFile('r1_drop', args.read2, 'r2_tmp', 2)
         FindDuplicates('r2_tmp', args.out2, args.drop)
         StripFile(args.drop, 'r1_tmp', args.out1, 1)
     else:
-        FindDuplicates(args.read2, args.out2, args.drop)
-        StripFile(args.drop, args.read1, args.out1, 1)
+        FindDuplicates(args.read2, args.out2, args.drop,args.nogzip)
+        StripFile(args.drop, args.read1, args.out1, 1, args.nogzip)
         
     sys.stdout.flush()
     sys.stderr.flush()
