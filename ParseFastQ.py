@@ -117,6 +117,7 @@ class Read1(Read):
 
 class Read2(Read):
     ''' Parse a FastQ Dictionary into R2 components '''
+    hdrlen = 1    # First anchor length
     dbrlen = 8    # Degenerate Base Region length
     anchor = 'GGACG' # TODO: this is a list of possible anchors
     index = 'ACTTGA' # TODO: this is also a list of size 4
@@ -125,7 +126,8 @@ class Read2(Read):
     # TODO: the initial letter is always known but will change depending
 
     # Offsets to speed of runtime
-    os_anchor = 9
+    os_dbr = hdrlen
+    os_anchor = os_dbr + dbrlen
     os_index = os_anchor + len(anchor)
     os_ers = os_index + len(index)
     os_insert = os_ers+len(ers)
@@ -133,7 +135,7 @@ class Read2(Read):
     def __init__(self,FastQ):
         ''' Constructor '''
         super(Read2,self).__init__(FastQ)
-        self.dbr = self.seq[1:Read2.dbrlen+1]
+        self.dbr = self.seq[Read2.os_dbr:Read2.os_anchor]
         self.insert= self.seq[Read2.os_insert:]
         if self.seq[0] != 'G' : 
             raise ValueError("Invalid Read 2 Sequence Start Character");
@@ -326,6 +328,7 @@ if __name__ == "__main__":
     parser.add_argument('--out2','-N', help='Read 1 fastq output file', required=True)
     parser.add_argument('--drop', help='Drop file name',default="drop_list",required=False)
     parser.add_argument('--nogzip','-Z', help='Do not zip output files',action='store_true')
+    parser.add_argument('--hdrlen','-l', help='Read 2 first anchor length', required=False,default=1)
     args = parser.parse_args()
     
     if(args.nogzip == False and args.drop == "drop_list"):
@@ -334,6 +337,7 @@ if __name__ == "__main__":
     # If read1 sequences need to be checked use this:
     check_read1 = 0
 
+    Read2.hdrlen = args.hdrlen
     Read2.index = args.index
     Read2.ers = args.enzyme
 
