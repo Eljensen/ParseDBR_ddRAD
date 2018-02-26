@@ -137,8 +137,8 @@ class Read2(Read):
         super(Read2,self).__init__(FastQ)
         self.dbr = self.seq[Read2.os_dbr:Read2.os_anchor]
         self.insert= self.seq[Read2.os_insert:]
-        if self.seq[0] != 'G' : 
-            raise ValueError("Invalid Read 2 Sequence Start Character");
+        #if self.seq[0] != 'G' : 
+        #    raise ValueError("Invalid Read 2 Sequence Start Character");
         
         if self.seq[Read2.os_ers:Read2.os_ers+len(Read2.ers)] != Read2.ers :
             raise ValueError("Invalid Enzyme Recognition Sequence")
@@ -300,7 +300,8 @@ def FindDuplicates(fin,fout,fdrop,nozip=False):
             else :
                 dup += 1
                 fdup.write(fq['id'] + '\n')
-        except ValueError:
+        except ValueError as e:
+            #print str(e) 
             fdup.write(fq['id'] + '\n')
             bad += 1
     fout.close()
@@ -341,7 +342,7 @@ if __name__ == "__main__":
     # If read1 sequences need to be checked use this:
     check_read1 = 0
 
-    Read2.hdrlen = args.hdrlen
+    Read2.hdrlen = int(args.hdrlen)
     Read2.index = args.index
     Read2.ers = args.enzyme
     recalc_os()
