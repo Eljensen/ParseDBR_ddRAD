@@ -147,6 +147,36 @@ class Test(unittest.TestCase):
         self.assertEqual("EGGGGGGGGGGGGGGGFG>FFFGGGGGGGGG<GGEEBGGGGFGFFF>BGGGGGGGCCFGFE0FC@@EC>DGEGGGGBGGBFGGGGGGGGGFC0@GGBBGGGCGEGGGGGGGF", test['conf'], "Confidence Match")
         pass
 
+    def testRead2StripDBRLongAnchor(self):
+        f = open('temp.fastq','w')
+        f.write("@D00430:276:CBV22ANXX:2:2202:1400:1979 2:N:0:1\n"
+                "GGGG"
+                "AAAAACAA"
+                "GGACG"
+                "ACTTGA"
+                "AATT"
+                "ATACTGAGAGATACTTGAGGCAGCACCAGAAACGTCACATGCAATAACAGGATAGGAAAGCATGCGAGGTATTTGTCTAGTCAACAAGTATTTATTGAGCAC\n"
+                "+\n"
+                "BBBBBABBGGGGGGCFEEGGGGGGGGGGGGGGGFG>FFFGGGGGGGGG<GGEEBGGGGFGFFF>BGGGGGGGCCFGFE0FC@@EC>DGEGGGGBGGBFGGGGGGGGGFC0@GGBBGGGCGEGGGGGGGF\n")
+        f.close()
+        Read2.hdrlen = 4;
+        recalc_os()
+        fq = ParseFastQ('temp.fastq')
+        temp = fq.next()
+        r2 = Read2(temp)
+        f1 = open('temp1.fastq','w')
+        f1.write(r2.trim_dbr_anchor())
+        f1.close()
+        
+        fq1 = ParseFastQ('temp1.fastq')
+        test = fq1.next()
+        self.assertEqual(r2.id, test['id'], "ID Match")
+        self.assertEqual("ACTTGAAATTATACTGAGAGATACTTGAGGCAGCACCAGAAACGTCACATGCAATAACAGGATAGGAAAGCATGCGAGGTATTTGTCTAGTCAACAAGTATTTATTGAGCAC", test['seq'], "Seq Match")
+        self.assertEqual("EGGGGGGGGGGGGGGGFG>FFFGGGGGGGGG<GGEEBGGGGFGFFF>BGGGGGGGCCFGFE0FC@@EC>DGEGGGGBGGBFGGGGGGGGGFC0@GGBBGGGCGEGGGGGGGF", test['conf'], "Confidence Match")
+        Read2.hdrlen = 1;
+        recalc_os()
+        pass
+
     def testStripDuplicates(self):
         #Read1.ers = 'AGAA'
         fn_r1 = "/home/karl/Downloads/P_Bear_ddRAD1_R1_subset.fastq.gz"
@@ -250,6 +280,7 @@ if __name__ == "__main__":
                            'Test.testSearchErsFailRead1',
                            'Test.testRead1String',
                            'Test.testRead2StripDBR',
+                           'Test.testRead2StripDBRLongAnchor',
                            'Test.trialRun',
      #                      'Test.trialRunDuplicates',
                            'Test.testRemoveDuplicates',

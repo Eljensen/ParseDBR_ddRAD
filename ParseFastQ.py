@@ -148,6 +148,8 @@ class Read2(Read):
             self.find_seq(self.index,self.os_anchor,self.os_index+len(self.index))
         except ValueError:
             raise ValueError("Index not found")
+    
+        
 
     def compare(self,read): 
         ''' Check for matching dbr and inserts '''
@@ -156,15 +158,11 @@ class Read2(Read):
         else :
             return False
     
-    def find_anchor(self):
-        return 9
-
     def trim_dbr_anchor(self):
-        idx = self.find_anchor()
         temp_str = self.id + '\n'
-        temp_str += self.seq[idx+len(Read2.anchor):] + '\n'
+        temp_str += self.seq[Read2.os_index:] + '\n'
         temp_str += '+\n'
-        temp_str += self.conf[idx+len(Read2.anchor):] + '\n'
+        temp_str += self.conf[Read2.os_index:] + '\n'
         return temp_str
 
 class StripIds(object):
@@ -315,6 +313,12 @@ def FindDuplicates(fin,fout,fdrop,nozip=False):
     print "Time: " + str(t2-t1)
     print "Time per read: " + str((t2-t1)/count)
     
+def recalc_os():
+    Read2.os_dbr = Read2.hdrlen
+    Read2.os_anchor = Read2.os_dbr + Read2.dbrlen
+    Read2.os_index =Read2.os_anchor + len(Read2.anchor)
+    Read2.os_ers =Read2.os_index + len(Read2.index)
+    Read2.os_insert =Read2.os_ers+len(Read2.ers)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -340,6 +344,7 @@ if __name__ == "__main__":
     Read2.hdrlen = args.hdrlen
     Read2.index = args.index
     Read2.ers = args.enzyme
+    recalc_os()
 
     if(check_read1 == 1):
         VerifyRead1(args.read1, 'r1_tmp', 'r1_drop')
